@@ -29,23 +29,23 @@ app.get("/users", (req, res): any => {
   }
 });
 
-app.post("/signup", (req, res) => {
+app.post("/signup", (req, res): any => {
   const { username, password } = req.body;
 
   const user = users.find((u: any) => u.username === username);
   if (user) {
-    res.status(500).json({
+    return res.status(500).json({
       message: "Can't signup username already present",
     });
+  } else {
+    users.push({
+      username,
+      password,
+    });
+    return res.send({
+      message: "You have signed up",
+    });
   }
-
-  users.push({
-    username,
-    password,
-  });
-  res.send({
-    message: "You have signed up",
-  });
 });
 
 app.post("/signin", (req, res) => {
