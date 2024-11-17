@@ -17,6 +17,18 @@ app.get("/", (req, res) => {
   res.send("Welcome to Auth System through Typescript");
 });
 
+app.get("/users", (req, res): any => {
+  try {
+    return res.status(200).json({
+      users,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: `Can't fetch users right now`,
+    });
+  }
+});
+
 app.post("/signup", (req, res) => {
   const { username, password } = req.body;
 
