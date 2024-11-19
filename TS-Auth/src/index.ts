@@ -1,15 +1,14 @@
 import express from "express";
 import env from "dotenv";
 env.config();
+import jwt from "jsonwebtoken";
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 let users: any = [];
 
-function generateToken(): string {
-  return Math.random().toString();
-}
+const JWT_SECRET: any = process.env.JWT_SECRET;
 
 app.use(express.json());
 
@@ -56,7 +55,12 @@ app.post("/signin", (req, res) => {
   );
 
   if (user) {
-    const token = generateToken();
+    const token = jwt.sign(
+      {
+        username: user.username,
+      },
+      JWT_SECRET
+    );
     user.token = token;
     res.status(200).json({
       token,
@@ -66,6 +70,11 @@ app.post("/signin", (req, res) => {
       message: `Invalid username or password`,
     });
   }
+});
+
+app.get("/me", (req, res) => {
+  const token: any = req.headers.authorization;
+  const userDetails = jwt.verify(token, JWT_SECRET);
 });
 
 app.listen(port, () => {
