@@ -72,9 +72,21 @@ app.post("/signin", (req, res) => {
   }
 });
 
-app.get("/me", (req, res) => {
+app.get("/me", (req, res): any => {
   const token: any = req.headers.authorization;
-  const userDetails = jwt.verify(token, JWT_SECRET);
+  const userDetails: any = jwt.verify(token, JWT_SECRET);
+
+  const username = userDetails.username;
+  const user = users.find((u: any) => u.username === username);
+
+  if (user) {
+    return res.status(200).json({
+      username: user.username,
+    });
+  }
+  return res.status(401).json({
+    message: "Unauthorized",
+  });
 });
 
 app.listen(port, () => {
