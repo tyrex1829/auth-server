@@ -72,20 +72,31 @@ app.post("/signin", (req, res) => {
   }
 });
 
-app.get("/me", (req, res): any => {
+function auth(req: any, res: any, next: any): any {
   const token: any = req.headers.authorization;
-  const userDetails: any = jwt.verify(token, JWT_SECRET);
 
-  const username = userDetails.username;
-  const user = users.find((u: any) => u.username === username);
-
-  if (user) {
-    return res.status(200).json({
-      username: user.username,
+  if (token) {
+    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+      if (err) {
+        return res.status(401).json({
+          message: `Unauthorized`,
+        });
+      }
+      req.user = decoded;
+      next();
+    });
+  } else {
+    return res.status(401).json({
+      message: `Unauthorized`,
     });
   }
-  return res.status(401).json({
-    message: "Unauthorized",
+}
+
+app.get("/me", auth, (req, res): any => {
+  const user = req.user;
+
+  return res.status(200).json({
+    message: user.username,
   });
 });
 
