@@ -2,6 +2,7 @@ import express from "express";
 import env from "dotenv";
 env.config();
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,7 +29,7 @@ app.get("/users", (req, res): any => {
   }
 });
 
-app.post("/signup", (req, res): any => {
+app.post("/signup", async (req, res): Promise<any> => {
   const { username, password } = req.body;
 
   const user = users.find((u: any) => u.username === username);
@@ -36,40 +37,47 @@ app.post("/signup", (req, res): any => {
     return res.status(500).json({
       message: "Can't signup username already present",
     });
-  } else {
-    users.push({
-      username,
-      password,
-    });
-    return res.send({
-      message: "You have signed up",
-    });
   }
+  const hashedPassword = await bcrypt.hash(password, 10);
+  users.push({
+    username,
+    password: hashedPassword,
+  });
+  return res.send({
+    message: "You have signed up",
+  });
 });
 
-app.post("/signin", (req, res) => {
+app.post("/signin", async (req, res): Promise<any> => {
   const { username, password } = req.body;
 
-  const user = users.find(
-    (u: any) => u.username === username && u.password === password
-  );
+  const user = users.find((u: any) => u.username === username);
 
-  if (user) {
-    const token = jwt.sign(
-      {
-        username: user.username,
-      },
-      JWT_SECRET
-    );
-    user.token = token;
-    res.status(200).json({
-      token,
-    });
-  } else {
-    res.status(403).send({
-      message: `Invalid username or password`,
+  if (!user) {
+    return res.status(400).json({
+      message: `Invalid username.`,
     });
   }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    return res.status(400).json({
+      message: `Invalid password.`,
+    });
+  }
+
+  const token = jwt.sign(
+    {
+      username: user.username,
+    },
+    JWT_SECRET
+  );
+  user.token = token;
+  return res.status(200).json({
+    token: token,
+    message: `Login successful`,
+  });
 });
 
 function auth(req: any, res: any, next: any): any {
